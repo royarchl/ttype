@@ -1,0 +1,7 @@
+# C++ compilation objects
+obj/
+*.o
+test
+
+# Temp scripts
+*.sh
