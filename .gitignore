@@ -5,3 +5,9 @@ test
 
 # Temp scripts
 *.sh
+
+# Backups
+*.backup
+
+# Temp txt files
+src/*.txt
