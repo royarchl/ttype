@@ -1,46 +1,44 @@
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/component_base.hpp>
+#include <ftxui/component/screen_interactive.hpp>
+
 #include "gap-buffer.h"
 
 int main() {
-  GapBuffer gap_buffer;
+  GapBuffer buffer;
 
-  gap_buffer.TextInsert("Theaiak");
-  gap_buffer.PrintBuffer();
+  ftxui::ScreenInteractive screen = ftxui::ScreenInteractive::Fullscreen();
 
-  for (int i = 0; i < 5; ++i) {
-    gap_buffer.MoveCharacterLeft();
-  }
-  gap_buffer.PrintBuffer();
+  ftxui::Component component = ftxui::Renderer([&buffer] {
+    return ftxui::vbox({
+        ftxui::window(ftxui::text("Buffer"),
+                      ftxui::paragraph(buffer.PrintBuffer()) | ftxui::inverted),
+        ftxui::window(ftxui::text("Input"),
+                      ftxui::paragraph(buffer.GetBufferContent())),
+    });
+  });
 
-  gap_buffer.MoveCharacterRight();
-  gap_buffer.PrintBuffer();
-
-  gap_buffer.TextInsert("01234567");  // 16 (resize)
-  gap_buffer.PrintBuffer();
-
-  gap_buffer.CharacterInsert('w');  // 17
-  gap_buffer.PrintBuffer();
-
-  for (int i = 0; i < 20; ++i) {
-    gap_buffer.CharacterDelete();
-  }
-  gap_buffer.PrintBuffer();
-
-  // gap_buffer.LoadFile("example.txt");
-  // gap_buffer.PrintBuffer();
-
-  for (int i = 0; i < 8; ++i) {
-    gap_buffer.MoveCharacterLeft();
-  }
-  gap_buffer.PrintBuffer();
-
-  gap_buffer.CharacterBackspace();
-  gap_buffer.CharacterBackspace();
-  gap_buffer.PrintBuffer();
-
-  for (int i = 0; i < 3; ++i) {
-    gap_buffer.MoveCharacterRight();
-  }
-  gap_buffer.PrintBuffer();
+  ftxui::Component event_handler =
+      ftxui::CatchEvent(component, [&](ftxui::Event event) {
+        if (event == ftxui::Event::Escape) {
+          screen.ExitLoopClosure()();
+        } else if (event == ftxui::Event::Backspace) {
+          buffer.CharacterBackspace();
+        } else if (event == ftxui::Event::Delete) {
+          buffer.CharacterDelete();
+        } else if (event == ftxui::Event::ArrowLeft) {
+          buffer.MoveCharacterLeft();
+        } else if (event == ftxui::Event::ArrowRight) {
+          buffer.MoveCharacterRight();
+        } else if (event == ftxui::Event::Return) {
+          buffer.CharacterInsert('\n');
+        } else if (event.is_character()) {
+          char c = *event.character().data();
+          buffer.CharacterInsert(c);
+        }
+        return false;
+      });
+  screen.Loop(event_handler);
 
   return 0;
 }

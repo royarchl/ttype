@@ -14,30 +14,32 @@ GapBuffer::GapBuffer(const std::string& filename, std::size_t gsize)
   LoadFile(filename);
 }
 
-GapBuffer::~GapBuffer() = default;
+GapBuffer::~GapBuffer() {
+  /* Is this necessary? Or is that just what default does? */
+  delete[] buffer_start_;
+}
 
+/*
+ * Intentionally done to show files being automatically closed when they exit
+ * the scope they were declared in, as defined by the curly braces.
+ */
 void GapBuffer::LoadFile(const std::string& filename) {
-  /* Opens the file in binary mode and immediately jumps to the end. */
-  std::ifstream file(filename, std::ios::binary | std::ios::ate);
+  {
+    /* Opens the file in binary mode and immediately jumps to the end. */
+    std::ifstream file(filename, std::ios::binary | std::ios::ate);
 
-  if (!file) {
-    std::cout << "Error opening file.\n";
-    return;
+    /* Returns the current position in the stream. */
+    std::streampos file_size = file.tellg();
+    /* Move back to the beginning of the file. */
+    file.seekg(0, std::ios::beg);
+
+    InitBuffer(static_cast<std::size_t>(file_size) + gap_size_);
+
+    char ch;
+    while (file.get(ch)) {
+      CharacterInsert(ch);
+    }
   }
-
-  /* Returns the current position in the stream. */
-  std::streampos file_size = file.tellg();
-  /* Move back to the beginning of the file. */
-  file.seekg(0, std::ios::beg);
-
-  InitBuffer(static_cast<std::size_t>(file_size) + gap_size_);
-
-  char ch;
-  while (file.get(ch)) {
-    CharacterInsert(ch);
-  }
-
-  file.close();
 }
 
 void GapBuffer::CharacterInsert(char character) {
@@ -94,23 +96,28 @@ void GapBuffer::TextInsert(const std::string& text) {
   }
 }
 
-void GapBuffer::PrintBuffer() {
-  std::cout << '[';
+std::string GapBuffer::PrintBuffer() const {
+  std::string return_buffer;
+
+  // return_buffer += '[';
+  // std::cout << '[';
 
   for (char* it = buffer_start_; it < buffer_end_; ++it) {
-    if (it == gap_start_) {
-      std::cout << '(';
-    }
+    // if (it == gap_start_) {
+    //   std::cout << '(';
+    // }
     if (it >= gap_start_ && it < gap_end_) {
       *it = '_';
     }
-    std::cout << *it;
-    if (it == gap_end_ - 1) {
-      std::cout << ')';
-    }
+    return_buffer += *it;
+    // std::cout << *it;
+    // if (it == gap_end_ - 1) {
+    //   std::cout << ')';
+    // }
   }
-  std::cout << "] (" << (gap_end_ - gap_start_) << ", "
-            << (buffer_end_ - buffer_start_) << ")\n";
+  // std::cout << "] (" << (gap_end_ - gap_start_) << ", "
+  //           << (buffer_end_ - buffer_start_) << ")\n";
+  return return_buffer;
 }
 
 void GapBuffer::InitBuffer(std::size_t size) {
@@ -150,12 +157,13 @@ void GapBuffer::EnlargeBuffer() {
     *new_buffer_ptr = *it;
   }
 
+  /* Is this naturally freed based on teh destructor? */
   delete[] buffer_start_;
 
   buffer_start_ = new_buffer;
   buffer_end_ = buffer_start_ + new_buffer_size;
 
   gap_end_ = new_gap_end;
-  std::cout << gap_start_ - new_buffer << ':' << old_buffer_size << ':'
-            << gap_end_ - new_buffer << '\n';
+  // std::cout << gap_start_ - new_buffer << ':' << old_buffer_size << ':'
+  //           << gap_end_ - new_buffer << '\n';
 }

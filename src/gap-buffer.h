@@ -1,6 +1,9 @@
 #ifndef GAP_BUFFER
 #define GAP_BUFFER
 
+#include <cstddef>
+#include <utility>
+
 #include "editor-interface.h"
 
 /*
@@ -11,27 +14,43 @@
 
 class GapBuffer : EditorInterface {
  public:
+  /* Constructors */
   GapBuffer(std::size_t gsize = kDefaultGapSize);
-
   GapBuffer(const std::string& filename, std::size_t gsize = kDefaultGapSize);
-
   ~GapBuffer() override; /* = default; */
 
+  /* Public methods */
   void LoadFile(const std::string& filename) override;
-
   void CharacterInsert(char character) override;
-
   void CharacterBackspace() override;
-
   void CharacterDelete() override;
-
   void MoveCharacterLeft() override;
-
   void MoveCharacterRight() override;
-
   void TextInsert(const std::string& text) override;
+  std::string PrintBuffer() const;
 
-  void PrintBuffer();
+  /* Methods to assist testing */
+  std::size_t GetBufferSize() const { return (buffer_end_ - buffer_start_); }
+  std::size_t GetGapSize() const { return (gap_end_ - gap_start_); }
+  std::size_t GetDefaultGapSize() const { return kDefaultGapSize; }
+  std::pair<std::size_t, std::size_t> GetGapOffsets() const {
+    return {(gap_start_ - buffer_start_), (gap_end_ - buffer_start_)};
+  }
+  std::string GetBufferContent() const {  // Intentionally copying string
+    std::string buffer_content;
+    for (const char* it = buffer_start_; it < buffer_end_; ++it) {
+      if (it == gap_start_) {
+        // Remember to REMOVE THIS when I walk away from TUI
+        buffer_content += '|';
+        it = gap_end_;
+        if (it >= buffer_end_) {
+          break;
+        }
+      }
+      buffer_content += *it;
+    }
+    return buffer_content;
+  }
 
  private:
   /* buffer_ can be used/referenced to be the first element in the array. */
