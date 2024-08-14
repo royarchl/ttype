@@ -1,5 +1,4 @@
 # C++ compilation objects
-obj/
 *.o
 test
 
@@ -11,3 +10,12 @@ test
 
 # Temp txt files
 src/*.txt
+
+# CMake build files
+build/
+obj/
+.cache/
+# tests/
+
+# 3rd-party dependencies
+external/
